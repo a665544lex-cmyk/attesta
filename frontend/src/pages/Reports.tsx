@@ -7,6 +7,8 @@ import {
 import { CoverageBar, Seal, StatusPill, useToast } from "../ui";
 import { FindingList } from "./Runs";
 
+declare const __PREVIEW__: boolean;
+
 export function Reports() {
   const systems = data.systems.filter((s) => s.frameworks.length);
   return (
@@ -111,7 +113,12 @@ export function ReportDetail({ fw, sys }: { fw: string; sys: string }) {
         </div>
         <div className="actions no-print">
           <button className="btn btn-quiet" onClick={() => toast("Share link copied. It expires in 30 days.")}><LuShare2 /> Share with auditor</button>
-          <button className="btn btn-primary" onClick={() => window.print()}><LuDownload /> Download PDF</button>
+          <button
+            className="btn btn-primary"
+            onClick={() => (__PREVIEW__ ? toast("PDF export runs on the server in the full version") : window.print())}
+          >
+            <LuDownload /> Download PDF
+          </button>
         </div>
       </div>
 

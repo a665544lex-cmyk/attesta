@@ -17,7 +17,10 @@ const options = {
   sourcemap: false,
   jsx: "automatic",
   loader: { ".json": "json" },
-  define: { "process.env.NODE_ENV": JSON.stringify(serve ? "development" : "production") },
+  define: {
+    "process.env.NODE_ENV": JSON.stringify(serve ? "development" : "production"),
+    __PREVIEW__: JSON.stringify(process.argv.includes("--preview")),
+  },
   nodePaths,
   logLevel: "info",
 };
@@ -33,7 +36,20 @@ function assemble(result) {
   return html;
 }
 
-if (!serve) {
+if (process.argv.includes("--preview")) {
+  // Body-only page for hosted previews that supply their own document skeleton.
+  const result = await esbuild.build(options);
+  const js = result.outputFiles.find((f) => f.path.endsWith(".js")).text;
+  const css = result.outputFiles.find((f) => f.path.endsWith(".css"))?.text ?? "";
+  const page = `<title>Attesta Prototype</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>${css}</style>
+<div id="root"></div>
+<script>${js.replace(/<\/script/g, "<\\/script")}</script>`;
+  mkdirSync("dist", { recursive: true });
+  writeFileSync("dist/preview.html", page);
+  console.log(`dist/preview.html written (${(page.length / 1024).toFixed(0)} KB)`);
+} else if (!serve) {
   const result = await esbuild.build(options);
   const html = assemble(result);
   console.log(`dist/index.html written (${(html.length / 1024).toFixed(0)} KB)`);
